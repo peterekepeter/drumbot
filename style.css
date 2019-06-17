@@ -1,0 +1,33 @@
+html {
+    background: #222;
+    color: #eee;
+}
+
+
+.knob{
+    display: inline-block;
+    background:red;
+    width: 4rem;
+    height: 4rem;
+    border-radius: 100%;
+    background: 
+        linear-gradient(90deg, #000, 40%, #000, 60%, transparent, 80%, transparent),
+        linear-gradient(#000,48%,#f00, 50%, #f00,52%, #000, 60%, #000)
+        ;
+}
+
+.knob::before{
+    content:'';
+    display: inline-block;
+    background:red;
+    width: 4rem;
+    height: 4rem;
+    border-radius: 100%;
+    background: 
+        radial-gradient(closest-side, rgba(222,222,222,.25), 
+        40%, rgba(199,199,199,.25), 
+        85%,  rgba(0,0,0, 1.0),
+        86%,  rgba(99,99,99,.25)
+        90%,  rgba(99,99,99,.25)
+        95%,  rgba(66,66,66,1) );
+}
