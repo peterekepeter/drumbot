@@ -1,14 +1,20 @@
 html {
     background: #222;
     color: #eee;
+    display: grid;
+    height: 100%;
+    width: 100%;
 }
 
+body{
+    margin: auto;
+}
 
 .knob{
     display: inline-block;
     background:red;
-    width: 4rem;
-    height: 4rem;
+    width: 8rem;
+    height: 8rem;
     border-radius: 100%;
     background: 
         linear-gradient(90deg, #000, 40%, #000, 60%, transparent, 80%, transparent),
@@ -20,8 +26,8 @@ html {
     content:'';
     display: inline-block;
     background:red;
-    width: 4rem;
-    height: 4rem;
+    width: 8rem;
+    height: 8rem;
     border-radius: 100%;
     background: 
         radial-gradient(closest-side, rgba(222,222,222,.25), 
