@@ -41,12 +41,12 @@ class Voice
         this.noise.start();
         
         this.oscillator = context.createOscillator();
+        this.filterFrequencyHz = 440;
         this.oscillator.frequency.setValueAtTime(440, context.currentTime); // value in hertz
         this.oscillator.detune.setValueAtTime(0, context.currentTime);
         this.oscillator.type = "sine"; // square sawtooth triangle custom;
         this.oscillator.connect(this._gain);
         this.oscillator.start();
-
 
         this.onOsc = true;
         
@@ -70,6 +70,10 @@ class Voice
                 this.oscillator.disconnect(this._gain);
             }
         }
+    }
+
+    get type(){
+        return this.onOsc ? this.oscillator.type : 'noise';
     }
 
     set gain(value){
@@ -100,13 +104,16 @@ class Voice
     }
 
     set filterFrequency(value){
+        this.filterFrequencyHz = 20+value*value*value*22050;
         this.filter.frequency.linearRampToValueAtTime(
-            20+value*value*value*22050, this.context.currentTime+.1);
+            this.filterFrequencyHz, this.context.currentTime+.1);
     }
 
     set filterQ(value){
+        this.filterQValue = value *50;
         this.filter.Q.linearRampToValueAtTime(
-            value*50, this.context.currentTime+.1);
+            this.filterQValue, this.context.currentTime+.1);
+            
     }
 
 }
@@ -114,32 +121,54 @@ class Voice
 class VoiceUi {
     constructor(){
         this.element = render('div.voice', null,
-            render(Knob, {
-                onchange: value => this.voice.gain = value,
+            this.gainKnob = render(Knob, {
+                onchange: value => {
+                    this.voice.gain = value;
+                    this.gainKnob.textLabel = formatGainDecibel(value);
+                },
                 init: 0,
             }), 
-            render(Knob,{
+            this.oscTypeKnob = render(Knob,{
                 min:0, max:4, increments:1, init:0,
-                onchange: value => this.voice.type = value,
+                onchange: value => {
+                    this.voice.type = value;
+                    this.oscTypeKnob.textLabel = this.voice.type;
+                },
             }),
-            render(Knob, {
-                onchange: value => this.voice.vco = value,
+            this.semitoneKnob = render(Knob, {
+                onchange: value => {
+                    this.voice.vco = value;
+                    this.semitoneKnob.textLabel = Math.round(value*12) + ' st';
+                },
                 min: -2, max: 2, increments: 1/12, init:0
             }),
-            render(Knob, {
-                onchange: value => this.voice.detune = value, 
+            this.detuneKnob = render(Knob, {
+                onchange: value => {
+                    this.voice.detune = value
+                    this.detuneKnob.textLabel = Math.round(value)+' cent';
+                }, 
                 init:0, min: -50, max:+50
             }),
-            render(Knob, {
-                onchange: value => this.voice.filterType = value, 
+            this.filterTypeKnob = render(Knob, {
+                onchange: value => {
+                    this.voice.filterType = value;
+                    this.filterTypeKnob.textLabel = this.voice.filterTypeText;
+                },
                 init:4, min: 0, max:4, increments: 1
             }),
-            render(Knob, {
-                onchange: value => this.voice.filterFrequency = value, 
+            this.filterFrequencyKnob = render(Knob, {
+                onchange: value => {
+                    this.voice.filterFrequency = value;
+                    const display = frequencyFormat(this.voice.filterFrequencyHz);
+                    this.filterFrequencyKnob.textLabel = display;
+                }, 
                 init:0, min: 0, max:1
             }),
-            render(Knob, {
-                onchange: value => this.voice.filterQ = value, 
+            this.filterQKnob = render(Knob, {
+                onchange: value => {
+                    this.voice.filterQ = value;
+                    this.filterQKnob.textLabel = this.voice.filterQValue.toFixed(1) + 'Q';
+                }, 
                 init:0, min: 0, max:1
             })
         );
@@ -199,7 +228,7 @@ class Knob
                 ondragstart : () => false,
                 onmousedown : event => draggingKnob = this
             }, 
-            this.label = render('label', null, 'hai!'),
+            this.label = render('label', null, '?'),
             render('span.knob-base', null,
                 this.knob = render('span.knob')
             )
@@ -250,6 +279,10 @@ class Knob
             this.value = value;
             this.onchange(this.value);
         })
+    }
+
+    set textLabel(value){
+        this.label.textContent = value;
     }
 
     attributeChangedCallback(name, oldValue, newValue){
@@ -320,5 +353,26 @@ function actuallyMakeNoiseBuffer(context) {
 
 	return buffer;
 };
+
+function frequencyFormat(value){
+    if (value > 1000){
+        return (value/1000).toFixed(2) + 'kHz';
+    } else {
+        return Math.round(value) + 'Hz';
+    }
+}
+
+function formatGainDecibel(value){
+    //dB= 20log(V1/V2)= 10log(P1/P2)
+    const decibel = 20*Math.log(value);
+    if (decibel == 0){
+        return '0 db';
+    }
+    if (decibel < -1000){
+        return '-∞ db';
+    } else {
+        return (decibel < -10 ? Math.round(decibel) : decibel.toFixed(1)) + ' db';
+    }
+}
 
 main();
