@@ -95,6 +95,10 @@ class Voice
         this.filter.type = types[value];
     }
 
+    get filterTypeText(){
+        return this.filter.type;
+    }
+
     set filterFrequency(value){
         this.filter.frequency.linearRampToValueAtTime(
             20+value*value*value*22050, this.context.currentTime+.1);
@@ -109,7 +113,7 @@ class Voice
 
 class VoiceUi {
     constructor(){
-        this.element = render('div', null,
+        this.element = render('div.voice', null,
             render(Knob, {
                 onchange: value => this.voice.gain = value,
                 init: 0,
@@ -191,10 +195,15 @@ class Knob
     constructor(){
         this._internalValue = 0;
         this._value = 0;
-        this.element = render('span.knob', {
-            ondragstart : () => false,
-            onmousedown : event => draggingKnob = this
-        });
+        this.element = render('div.column.knob-control', {
+                ondragstart : () => false,
+                onmousedown : event => draggingKnob = this
+            }, 
+            this.label = render('label', null, 'hai!'),
+            render('span.knob-base', null,
+                this.knob = render('span.knob')
+            )
+        );
         this.element.addEventListener('touchstart', event => {
             draggingKnob = this;
             event.preventDefault();
@@ -250,7 +259,7 @@ class Knob
     updateTransform(){
         const mapped = (this._value - this.valueMin)
             *270/(this.valueMax - this.valueMin) + 180 - 45;
-        this.element.style.transform = `rotate(${mapped}deg)`
+        this.knob.style.transform = `rotate(${mapped}deg)`
     }
 
 }
