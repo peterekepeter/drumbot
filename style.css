@@ -4,6 +4,8 @@ html {
     display: grid;
     height: 100%;
     width: 100%;
+    font-family: sans-serif;
+    text-transform: uppercase;
 }
 
 body{
@@ -11,6 +13,7 @@ body{
 }
 
 .knob{
+    touch-action: none;
     display: inline-block;
     background:red;
     width: 8rem;

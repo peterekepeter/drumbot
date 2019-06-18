@@ -3,17 +3,22 @@
 
 
 function main(){
-    document.body.onclick = () => {
-        context.resume();
-        document.body.onclick = null;
+    const resumeContext = () => {
+        if (context.state != 'running'){
+            context.resume();
+        }
     }
-    const context = new AudioContext();
+    document.body.onclick = resumeContext;
+    document.body.ontouchstart = resumeContext;
+    
+    const context = new (window.AudioContext || window.webkitAudioContext)();
     const voice = new Voice(context);
     render(testView, null, render(VoiceUi, { voice }));
     window.onmousemove = globalMouseMove;
     window.onmouseup = globalMoseUp;
+    window.addEventListener('touchmove', globalTouchMove);
+    window.addEventListener('touchend', globalTouchEnd);
 }
-
 
 
 class Voice
@@ -68,18 +73,21 @@ class Voice
     }
 
     set gain(value){
-        this._gain.gain.setValueAtTime(value, this.context.currentTime)
+        this._gain.gain.linearRampToValueAtTime(value, this.context.currentTime+.1)
     }
 
     set vco(value){
-        this.oscillator.frequency.setValueAtTime(
-            Math.pow(2,value)*440, this.context.currentTime);
-        this.noise.playbackRate.setValueAtTime((value+2.04)/5, 0);
+        this.oscillator.frequency.linearRampToValueAtTime(
+            Math.pow(2,value)*440, this.context.currentTime+.01);
+        this.noise.playbackRate.linearRampToValueAtTime(
+            (value+2.04)/5, this.context.currentTime+.01);
     }
 
     set detune(value){
-        this.oscillator.detune.setValueAtTime(value, this.context.currentTime);
-        this.noise.detune.setValueAtTime(value*20, 0);
+        this.oscillator.detune.linearRampToValueAtTime(
+            value, this.context.currentTime+.1);
+        this.noise.detune.linearRampToValueAtTime(
+            value*20, this.context.currentTime+.1);
     }
 
     set filterType(value){
@@ -88,11 +96,13 @@ class Voice
     }
 
     set filterFrequency(value){
-        this.filter.frequency.setValueAtTime(20+value*value*value*22050,0);
+        this.filter.frequency.linearRampToValueAtTime(
+            20+value*value*value*22050, this.context.currentTime+.1);
     }
 
     set filterQ(value){
-        this.filter.Q.setValueAtTime(value*50,0);
+        this.filter.Q.linearRampToValueAtTime(
+            value*50, this.context.currentTime+.1);
     }
 
 }
@@ -137,6 +147,8 @@ let mouseX = 0;
 let mouseY = 0;
 let mouseDX = 0;
 let mouseDY = 0;
+let touchX = 0;
+let touchY = 0;
 
 function globalMouseMove(event){
     mouseDX = event.clientX - mouseX;
@@ -145,6 +157,28 @@ function globalMouseMove(event){
     mouseY = event.clientY;
     if (draggingKnob != null){
         draggingKnob.drag(mouseDX, mouseDY);
+    }
+}
+
+function globalTouchMove(event){
+    const x = event.touches[0].screenX;
+    const y = event.touches[0].screenY;
+    const dx = x - touchX;
+    const dy = y - touchY;
+    touchX = x;
+    touchY = y;
+    if (draggingKnob != null){
+        draggingKnob.drag(dx, dy);
+        event.preventDefault();
+        return false;
+    }
+    return true;
+}
+
+function globalTouchEnd(event){
+    if (draggingKnob != null){
+        draggingKnob = null;
+        event.preventDefault();
     }
 }
 
@@ -160,6 +194,11 @@ class Knob
         this.element = render('span.knob', {
             ondragstart : () => false,
             onmousedown : event => draggingKnob = this
+        });
+        this.element.addEventListener('touchstart', event => {
+            draggingKnob = this;
+            event.preventDefault();
+            return false;
         })
         this.valueMin=0;
         this.valueMax=1;
