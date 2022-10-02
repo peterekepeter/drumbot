@@ -12,8 +12,13 @@ function main(){
     document.body.ontouchstart = resumeContext;
     
     const context = new (window.AudioContext || window.webkitAudioContext)();
-    const voice = new Voice(context);
-    render(testView, null, render(VoiceUi, { voice }));
+
+    const views = [];
+    for (let i=0; i<8; i++){
+        const voice = new Voice(context);
+        views.push(render(VoiceUi, { voice }));
+    }
+    render(testView, null, ...views);
     window.onmousemove = globalMouseMove;
     window.onmouseup = globalMoseUp;
     window.addEventListener('touchmove', globalTouchMove);
